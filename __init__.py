@@ -107,7 +107,7 @@ class ARMATURE_OT_CreateAndImportArmatureDataFromJson(bpy.types.Operator, Import
 # Panel for the exporter
 class ARMATURE_PT_VXMod_armature_tools(bpy.types.Panel):
     bl_label = "VXMod Armature Tools"
-    bl_idname = "ARMATURE_PT_VXMod_armature_tools"
+    bl_idname = "armature.vxmod_armature_tools"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "data"
@@ -251,6 +251,19 @@ class IMPORT_OT_VertexWeightsFromJson(Operator, ImportHelper):
         importVertexGroupsFromJsonFile(ob, path_to_file)
         return {'FINISHED'}
 
+
+# this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+class MESH_OT_RemoveEmptyVGroups(Operator):
+    ''''''
+    bl_idname = "mesh.remove_empty_vgroups"
+    bl_label = "Remove Empty (Weightless) VGs"
+    bl_description = "Remove Empty (Weightless) VGs"
+
+    def execute(self, context):
+        ob = bpy.context.object
+        removeEmptyVGroups(ob)
+        return {'FINISHED'}
+
 def draw_add_custom_functions_in_vertex_groups_dropdown_menu(self, context):
     self.layout.separator()
     self.layout.operator(
@@ -262,7 +275,12 @@ def draw_add_custom_functions_in_vertex_groups_dropdown_menu(self, context):
         EXPORT_OT_VertexWeightsToJson.bl_idname, 
         text="Export Weights to JSON", 
         icon='EXPORT'
-    )       
+    )  
+    self.layout.operator(
+        MESH_OT_RemoveEmptyVGroups.bl_idname, 
+        text="Remove Empty (Weightless) VGs", 
+        icon='X'
+    )          
 
 
 # this class extends ExportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -381,6 +399,7 @@ def register():
     #
     bpy.utils.register_class(EXPORT_OT_VertexWeightsToJson)
     bpy.utils.register_class(IMPORT_OT_VertexWeightsFromJson)
+    bpy.utils.register_class(MESH_OT_RemoveEmptyVGroups)
     bpy.types.MESH_MT_vertex_group_specials.append(draw_add_custom_functions_in_vertex_groups_dropdown_menu)
     #
     bpy.utils.register_class(EXPORT_OT_Shapekeys_To_Json)

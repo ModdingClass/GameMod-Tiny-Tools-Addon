@@ -48,3 +48,21 @@ def importVertexGroupsFromJsonFile(ob, filename):
                 vgrp.add([int(index)], weight, 'REPLACE')
 
 
+
+def removeEmptyVGroups(obj):
+    try:
+        vertex_groups = obj.vertex_groups
+        groups = {r : None for r in range(len(vertex_groups))}
+        for vert in obj.data.vertices:
+            for vg in vert.groups:
+                i = vg.group
+                if i in groups:
+                    del groups[i]
+        #
+        lis = [k for k in groups]
+        lis.sort(reverse=True)
+        for i in lis:
+            vertex_groups.remove(vertex_groups[i])
+    except:
+        pass
+
