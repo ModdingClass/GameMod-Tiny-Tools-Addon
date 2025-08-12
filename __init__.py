@@ -302,7 +302,30 @@ class EXPORT_OT_Shapekeys_To_Json(Operator, ExportHelper):
         ob = bpy.context.object
         exportShapeKeysToJsonFile(ob, path_to_file)
         return {'FINISHED'}
+
+# this class extends ExportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+class EXPORT_OT_Shapekeys_To_Json_Non_Interactive(Operator):
+    ''''''
+    bl_idname = "export.shapekeys_to_json_non_interactive"
+    bl_label = "Export shapekeys (Non Interactive)"
+    bl_description = "Exports shapekeys to a custom json file non interractive"
+
+    filepath = StringProperty(name="Filepath", description="Path to JSON file")
     
+    def execute(self, context):
+        
+        ob = context.object
+        if not ob:
+            self.report({'ERROR'}, "No active object found.")
+            return {'CANCELLED'}
+        path_to_file = self.filepath
+        print('Pushing shapekeys to file:', path_to_file)
+        try:
+            exportShapeKeysToJsonFile(ob, path_to_file)
+        except Exception as e:
+            self.report({'ERROR'}, "Failed to export shapekeys: {}".format(e))
+            return {'CANCELLED'}            
+        return {'FINISHED'}    
 
 # this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 class IMPORT_OT_Shapekeys_From_Json(Operator, ImportHelper):
@@ -322,6 +345,31 @@ class IMPORT_OT_Shapekeys_From_Json(Operator, ImportHelper):
         ob = bpy.context.object
         importShapeKeysFromJsonFile(ob, path_to_file)
         return {'FINISHED'}
+
+# this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+class IMPORT_OT_Shapekeys_From_Json_NonInteractive(Operator):
+    ''''''
+    bl_idname = "import.shapekeys_from_json_non_interactive"
+    bl_label = "Import shapekeys (Non Interactive)"
+    bl_description = "Import shapekeys from a custom json file non interractive"
+
+    filepath = StringProperty(name="Filepath", description="Path to JSON file")
+    
+    def execute(self, context):
+        ob = context.object
+        if not ob:
+            self.report({'ERROR'}, "No active object found.")
+            return {'CANCELLED'}
+        path_to_file = self.filepath
+        print('Loading shapekeys from file:', path_to_file)
+        try:
+            importShapeKeysFromJsonFile(ob, path_to_file)
+        except Exception as e:
+            self.report({'ERROR'}, "Failed to import shapekeys: {}".format(e))
+            return {'CANCELLED'}
+        return {'FINISHED'}
+
+
 
 
 class OBJECT_OT_split_shape_key_by_axis(bpy.types.Operator):
@@ -381,11 +429,74 @@ def draw_add_custom_functions_in_shapekeys_dropdown_menu(self, context):
         op_row.enabled=False    
 
 
+class OBJECT_OT_StripAndClean(bpy.types.Operator):
+    """Strip and Clean Mesh Object"""
+    bl_idname = "object.strip_and_clean"
+    bl_label = "Strip and Clean"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    vg = bpy.props.BoolProperty(name="Remove Vertex Groups", default=False)
+    sk = bpy.props.BoolProperty(name="Remove Shape Keys", default=False)
+    mat = bpy.props.BoolProperty(name="Remove Materials", default=False)
+    mod = bpy.props.BoolProperty(name="Remove Modifiers", default=False)
+    all = bpy.props.BoolProperty(name="Remove All", default=False)
+
+    def execute(self, context):
+        obj = context.active_object
+        if obj.type != 'MESH':
+            self.report({'WARNING'}, "Active object is not a mesh.")
+            return {'CANCELLED'}
+        if self.all:
+            vg = sk = mat = mod = True
+        else:
+            vg = self.vg
+            sk = self.sk
+            mat = self.mat
+            mod = self.mod
+        if vg:
+            # Remove all vertex groups
+            bpy.ops.object.vertex_group_remove(all=True)
+            #if obj.vertex_groups:
+            #    obj.vertex_groups.clear()
+            self.report({'INFO'}, "Removed all vertex groups from {}.".format(obj.name))
+        if sk:
+            if obj.data.shape_keys:
+                obj.active_shape_key_index = 0
+                bpy.ops.object.shape_key_remove(all=True)
+            self.report({'INFO'}, "Removed all shape keys from {}.".format(obj.name))                
+            #if obj.data.shape_keys:
+            #    blocks = obj.data.shape_keys.key_blocks
+            #    for ind in reversed(range(len(blocks))):
+            #        bl = blocks[ind]
+            #        obj.shape_key_remove(bl[ind])
+            #    
+            #if obj.data.shape_keys:
+            #    shape_keys = obj.data.shape_keys.key_blocks
+            #    for i in range(len(shape_keys) - 1, -1, -1):
+            #        obj.shape_key_remove(shape_keys[i])
+            #    self.report({'INFO'}, "Removed all shape keys from {}.".format(obj.name))
+        if mat:
+            if obj.material_slots:
+                obj.active_material_index = 0
+                print("removing materials")
+                for x in bpy.context.object.material_slots: #For all of the materials in the selected object:
+                    bpy.context.object.active_material_index = 0 #select the top material
+                    bpy.ops.object.material_slot_remove() 
+                    #delete it                  
+            self.report({'INFO'}, "Removed all materials from {}.".format(obj.name))
+        if mod:
+            if obj.modifiers:
+                for modifier in obj.modifiers:
+                    obj.modifiers.remove(modifier)
+                self.report({'INFO'}, "Removed all modifiers from {}.".format(obj.name))
+            self.report({'INFO'}, "Cleaning of {} completed.".format(obj.name))
+        return {'FINISHED'}
 
 
 
 # Register and unregister classes
 def register():
+    bpy.utils.register_class(OBJECT_OT_StripAndClean)
     bpy.utils.register_class(ARMATURE_OT_ExportArmatureDataToJson)
     bpy.utils.register_class(ARMATURE_OT_ImportArmatureDataFromJson)
     bpy.utils.register_class(ARMATURE_OT_CreateAndImportArmatureDataFromJson)
@@ -404,10 +515,13 @@ def register():
     #
     bpy.utils.register_class(EXPORT_OT_Shapekeys_To_Json)
     bpy.utils.register_class(IMPORT_OT_Shapekeys_From_Json)
+    bpy.utils.register_class(EXPORT_OT_Shapekeys_To_Json_Non_Interactive)
+    bpy.utils.register_class(IMPORT_OT_Shapekeys_From_Json_NonInteractive)
     bpy.types.MESH_MT_shape_key_specials.append(draw_add_custom_functions_in_shapekeys_dropdown_menu)
     
 
 def unregister():
+    bpy.utils.unregister_class(OBJECT_OT_StripAndClean)
     bpy.utils.unregister_class(ARMATURE_OT_ExportArmatureDataToJson)
     bpy.utils.unregister_class(ARMATURE_OT_ImportArmatureDataFromJson)
     bpy.utils.unregister_class(ARMATURE_OT_CreateAndImportArmatureDataFromJson)    
@@ -423,6 +537,8 @@ def unregister():
     bpy.utils.unregister_class(IMPORT_OT_VertexWeightsFromJson)
     bpy.types.MESH_MT_vertex_group_specials.remove(draw_add_custom_functions_in_vertex_groups_dropdown_menu)
     #
+    bpy.utils.unregister_class(EXPORT_OT_Shapekeys_To_Json_Non_Interactive)
+    bpy.utils.unregister_class(IMPORT_OT_Shapekeys_From_Json_NonInteractive)    
     bpy.utils.unregister_class(EXPORT_OT_Shapekeys_To_Json)
     bpy.utils.unregister_class(IMPORT_OT_Shapekeys_From_Json)
     bpy.types.MESH_MT_shape_key_specials.remove(draw_add_custom_functions_in_shapekeys_dropdown_menu)    
