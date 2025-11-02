@@ -63,8 +63,8 @@ else:
 
 
 # Operator for exporting armature data
-class ARMATURE_OT_ExportArmatureDataToJson(bpy.types.Operator, ExportHelper):
-    bl_idname = "export.armature_data_to_json"
+class GMTT_OT_export_armature_to_json(bpy.types.Operator, ExportHelper):
+    bl_idname = "gmtt.export_armature_to_json"
     bl_label = "Export"
     bl_description = "Export armature data to JSON file"
     filename_ext = ".json"  # The file extension for the export
@@ -77,10 +77,10 @@ class ARMATURE_OT_ExportArmatureDataToJson(bpy.types.Operator, ExportHelper):
         return result
 
 # Operator for importing armature data
-class ARMATURE_OT_ImportArmatureDataFromJson(bpy.types.Operator, ImportHelper):
-    bl_idname = "import.armature_data_from_json"
+class GMTT_OT_import_armature_from_json(bpy.types.Operator, ImportHelper):
+    bl_idname = "gmtt.import_armature_from_json"
     bl_label = "Import"
-    bl_description = "Import armature data to JSON file"
+    bl_description = "Import armature data from JSON file"
     filename_ext = ".json"  # The file extension for the export
 
     # Filepath is handled by ImportHelper
@@ -91,10 +91,10 @@ class ARMATURE_OT_ImportArmatureDataFromJson(bpy.types.Operator, ImportHelper):
         return result
 
 # Operator for importing armature data
-class ARMATURE_OT_CreateAndImportArmatureDataFromJson(bpy.types.Operator, ImportHelper):
-    bl_idname = "import.create_and_import_armature_data_from_json"
+class GMTT_OT_create_and_import_armature_from_json(bpy.types.Operator, ImportHelper):
+    bl_idname = "gmtt.create_and_import_armature_from_json"
     bl_label = "Import"
-    bl_description = "Import new armature data to JSON file"
+    bl_description = "Import new armature data from JSON file"
     filename_ext = ".json"  # The file extension for the export
 
     # Filepath is handled by ImportHelper
@@ -105,9 +105,9 @@ class ARMATURE_OT_CreateAndImportArmatureDataFromJson(bpy.types.Operator, Import
         return result    
 
 # Panel for the exporter
-class ARMATURE_PT_VXMod_armature_tools(bpy.types.Panel):
-    bl_label = "VXMod Armature Tools"
-    bl_idname = "armature.vxmod_armature_tools"
+class GMTT_PT_armature_tools(bpy.types.Panel):
+    bl_label = "GMTT Armature Tools"
+    bl_idname = "gmtt.armature_tools"
     bl_space_type = 'PROPERTIES'
     bl_region_type = 'WINDOW'
     bl_context = "data"
@@ -119,20 +119,20 @@ class ARMATURE_PT_VXMod_armature_tools(bpy.types.Panel):
     #
     def draw(self, context):
         layout = self.layout
-        layout.operator("import.armature_data_from_json", text="Import Armature Data", icon='OUTLINER_DATA_ARMATURE')
-        layout.operator("export.armature_data_to_json", text="Export Armature Data", icon='OUTLINER_DATA_ARMATURE')
+        layout.operator("gmtt.import_armature_from_json", text="Import Armature Data", icon='OUTLINER_DATA_ARMATURE')
+        layout.operator("gmtt.export_armature_to_json", text="Export Armature Data", icon='OUTLINER_DATA_ARMATURE')
     
 
 
 def draw_add_custom_armature_importer_in_menu(self, context):
     layout = self.layout
-    layout.operator("import.create_and_import_armature_data_from_json", text="Import From JSON file", icon='IMPORT')
+    layout.operator("gmtt.create_and_import_armature_from_json", text="Import From JSON file", icon='IMPORT')
 
 
 # this class extends ExportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-class EXPORT_OT_MaterialsToJson(Operator, ExportHelper):
+class GMTT_OT_export_materials_to_json(Operator, ExportHelper):
     ''''''
-    bl_idname = "export.materials_to_json"
+    bl_idname = "gmtt.export_materials_to_json"
     bl_label = "Export materials"
     bl_description = "Exports materials to a custom json file"
 
@@ -149,9 +149,9 @@ class EXPORT_OT_MaterialsToJson(Operator, ExportHelper):
 
 
 # this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-class IMPORT_OT_MaterialsFromJson(Operator, ImportHelper):
+class GMTT_OT_import_materials_from_json(Operator, ImportHelper):
     ''''''
-    bl_idname = "import.materials_from_json"
+    bl_idname = "gmtt.import_materials_from_json"
     bl_label = "Import materials"
     bl_description = "Import materials from a custom json file"
 
@@ -166,9 +166,9 @@ class IMPORT_OT_MaterialsFromJson(Operator, ImportHelper):
         return {'FINISHED'}
     
 
-class OBJECT_OT_sort_materials(bpy.types.Operator):
+class GMTT_OT_sort_materials(bpy.types.Operator):
     """Sort materials alphabetically in the material slots"""
-    bl_idname = "object.sort_materials"
+    bl_idname = "gmtt.sort_materials"
     bl_label = "Sort Materials"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -186,17 +186,17 @@ class OBJECT_OT_sort_materials(bpy.types.Operator):
 def draw_add_custom_sort_in_materials_dropdown_menu(self, context):
     self.layout.separator()
     self.layout.operator(
-        OBJECT_OT_sort_materials.bl_idname, 
+        GMTT_OT_sort_materials.bl_idname, 
         text="Sort Materials", 
         icon='SORTALPHA'
     )
     self.layout.operator(
-        IMPORT_OT_MaterialsFromJson.bl_idname, 
+        GMTT_OT_import_materials_from_json.bl_idname, 
         text="Import Materials", 
         icon='IMPORT'
     )
     self.layout.operator(
-        EXPORT_OT_MaterialsToJson.bl_idname, 
+        GMTT_OT_export_materials_to_json.bl_idname, 
         text="Export Materials", 
         icon='EXPORT'
     )     
@@ -204,9 +204,9 @@ def draw_add_custom_sort_in_materials_dropdown_menu(self, context):
 
 
 # this class extends ExportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-class EXPORT_OT_VertexWeightsToJson(Operator, ExportHelper):
+class GMTT_OT_export_vertex_weights_to_json(Operator, ExportHelper):
     ''''''
-    bl_idname = "export.vertex_weights_to_json"
+    bl_idname = "gmtt.export_vertex_weights_to_json"
     bl_label = "Export weights to JSON"
     bl_description = "Exports weights to a custom json file"
 
@@ -229,9 +229,9 @@ class EXPORT_OT_VertexWeightsToJson(Operator, ExportHelper):
     
 
 # this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-class IMPORT_OT_VertexWeightsFromJson(Operator, ImportHelper):
+class GMTT_OT_import_vertex_weights_from_json(Operator, ImportHelper):
     ''''''
-    bl_idname = "import.vertex_weights_from_json"
+    bl_idname = "gmtt.import_vertex_weights_from_json"
     bl_label = "Import weights from JSON"
     bl_description = "Import weights from a custom json file"
 
@@ -253,9 +253,56 @@ class IMPORT_OT_VertexWeightsFromJson(Operator, ImportHelper):
 
 
 # this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-class MESH_OT_RemoveEmptyVGroups(Operator):
+class GMTT_OT_import_vertex_weights_from_dsf(Operator, ImportHelper):
     ''''''
-    bl_idname = "mesh.remove_empty_vgroups"
+    bl_idname = "gmtt.import_vertex_weights_from_dsf"
+    bl_label = "Import weights from DSF (DAZ)"
+    bl_description = "Import weights from a DAZ DSF file"
+
+    filter_glob = StringProperty(
+        default='*.dsf',
+        options={'HIDDEN'}
+    )
+    
+    def execute(self, context):
+        #bpy.context.scene.objects.active = None
+        #for obj in bpy.data.objects:
+        #    obj.select = False        
+        #bpy.ops.object.select_all(action='DESELECT')
+        print('Selected file:', self.filepath)
+        path_to_file = self.filepath
+        ob = bpy.context.object
+        importVertexGroupsFromDsfFile(ob, path_to_file)
+        return {'FINISHED'}
+
+# this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+class GMTT_OT_export_vertex_weights_to_dsf_snippet(Operator, ImportHelper):
+    ''''''
+    bl_idname = "gmtt.export_vertex_weights_to_dsf_snippet"
+    bl_label = "Export weights to DSF snippet (Daz)"
+    bl_description = "Export weights to a DSF file as a txt snippet"
+
+    filter_glob = StringProperty(
+        default='*.txt',
+        options={'HIDDEN'}
+    )
+    
+    def execute(self, context):
+        #bpy.context.scene.objects.active = None
+        #for obj in bpy.data.objects:
+        #    obj.select = False        
+        #bpy.ops.object.select_all(action='DESELECT')
+        print('Selected file:', self.filepath)
+        path_to_file = self.filepath
+        ob = bpy.context.object
+        print("Not actually implemented inside GMTT_OT_export_vertex_weights_to_dsf_snippet")
+        #exportVertexGroupsToDsfSnippetTxtFile(ob, path_to_file)
+        return {'FINISHED'}
+    
+# this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+class GMTT_OT_mesh_remove_empty_vgroups(Operator):
+    ''''''
+    bl_idname = "gmtt.mesh_remove_empty_vgroups"
     bl_label = "Remove Empty (Weightless) VGs"
     bl_description = "Remove Empty (Weightless) VGs"
 
@@ -266,27 +313,45 @@ class MESH_OT_RemoveEmptyVGroups(Operator):
 
 def draw_add_custom_functions_in_vertex_groups_dropdown_menu(self, context):
     self.layout.separator()
+
     self.layout.operator(
-        IMPORT_OT_VertexWeightsFromJson.bl_idname, 
+        GMTT_OT_import_vertex_weights_from_json.bl_idname, 
         text="Import Weights from JSON", 
         icon='IMPORT'
     )
     self.layout.operator(
-        EXPORT_OT_VertexWeightsToJson.bl_idname, 
+        GMTT_OT_export_vertex_weights_to_json.bl_idname, 
         text="Export Weights to JSON", 
         icon='EXPORT'
     )  
     self.layout.operator(
-        MESH_OT_RemoveEmptyVGroups.bl_idname, 
+        GMTT_OT_import_vertex_weights_from_dsf.bl_idname, 
+        text="Import Weights from DSF (Daz)", 
+        icon='IMPORT'
+    )    
+    self.layout.operator(
+        GMTT_OT_export_vertex_weights_to_dsf_snippet.bl_idname, 
+        text="Export Weights to DSF snippet (Daz)", 
+        icon='EXPORT'
+    )     
+    self.layout.operator(
+        GMTT_OT_convert_weights_between_characters.bl_idname, 
+        text="Convert vertex groups weights between characters", 
+        icon='ARROW_LEFTRIGHT'
+    )
+    #  
+    self.layout.separator()  
+    self.layout.operator(
+        GMTT_OT_mesh_remove_empty_vgroups.bl_idname, 
         text="Remove Empty (Weightless) VGs", 
         icon='X'
     )          
 
 
 # this class extends ExportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-class EXPORT_OT_Shapekeys_To_Json(Operator, ExportHelper):
+class GMTT_OT_export_shapekeys_to_json(Operator, ExportHelper):
     ''''''
-    bl_idname = "export.shapekeys_to_json"
+    bl_idname = "gmtt.export_shapekeys_to_json"
     bl_label = "Export shapekeys"
     bl_description = "Exports shapekeys to a custom json file"
 
@@ -304,9 +369,9 @@ class EXPORT_OT_Shapekeys_To_Json(Operator, ExportHelper):
         return {'FINISHED'}
 
 # this class extends ExportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-class EXPORT_OT_Shapekeys_To_Json_Non_Interactive(Operator):
+class GMTT_OT_export_shapekeys_to_json_non_interactive(Operator):
     ''''''
-    bl_idname = "export.shapekeys_to_json_non_interactive"
+    bl_idname = "gmtt.export_shapekeys_to_json_non_interactive"
     bl_label = "Export shapekeys (Non Interactive)"
     bl_description = "Exports shapekeys to a custom json file non interractive"
 
@@ -328,9 +393,9 @@ class EXPORT_OT_Shapekeys_To_Json_Non_Interactive(Operator):
         return {'FINISHED'}    
 
 # this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-class IMPORT_OT_Shapekeys_From_Json(Operator, ImportHelper):
+class GMTT_OT_import_shapekeys_from_json(Operator, ImportHelper):
     ''''''
-    bl_idname = "import.shapekeys_from_json"
+    bl_idname = "gmtt.import_shapekeys_from_json"
     bl_label = "Import shapekeys"
     bl_description = "Import shapekeys from a custom json file"
     filename_ext = ".json"  # ExportHelper mixin class uses this
@@ -347,9 +412,9 @@ class IMPORT_OT_Shapekeys_From_Json(Operator, ImportHelper):
         return {'FINISHED'}
 
 # this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-class IMPORT_OT_Shapekeys_From_Json_NonInteractive(Operator):
+class GMTT_OT_import_shapekeys_from_json_non_interactive(Operator):
     ''''''
-    bl_idname = "import.shapekeys_from_json_non_interactive"
+    bl_idname = "gmtt.import_shapekeys_from_json_non_interactive"
     bl_label = "Import shapekeys (Non Interactive)"
     bl_description = "Import shapekeys from a custom json file non interractive"
 
@@ -372,9 +437,9 @@ class IMPORT_OT_Shapekeys_From_Json_NonInteractive(Operator):
 
 
 
-class OBJECT_OT_split_shape_key_by_axis(bpy.types.Operator):
+class GMTT_OT_split_shapekey_by_axis(bpy.types.Operator):
     """Split selected shape key into X, Y, Z components"""
-    bl_idname = "object.split_shape_key_by_axis"
+    bl_idname = "gmtt.split_shapekey_by_axis"
     bl_label = "Split Shape Key by Axis"
     bl_options = {'REGISTER', 'UNDO'}
     #
@@ -401,7 +466,7 @@ def draw_add_custom_functions_in_shapekeys_dropdown_menu(self, context):
     self.layout.separator()
     op_row = self.layout.row()
     op_row.operator(
-        OBJECT_OT_split_shape_key_by_axis.bl_idname,
+        GMTT_OT_split_shapekey_by_axis.bl_idname,
         text="Split Shapekey by Axis", 
         icon='MONKEY'
     )
@@ -413,13 +478,13 @@ def draw_add_custom_functions_in_shapekeys_dropdown_menu(self, context):
     else:
         op_row.enabled=False
     self.layout.operator(
-        IMPORT_OT_Shapekeys_From_Json.bl_idname, 
+        GMTT_OT_import_shapekeys_from_json.bl_idname, 
         text="Import Shapekeys from JSON", 
         icon='IMPORT'
     )
     op_row = self.layout.row()
     op_row.operator(
-        EXPORT_OT_Shapekeys_To_Json.bl_idname, 
+        GMTT_OT_export_shapekeys_to_json.bl_idname, 
         text="Export Shapekeys to JSON", 
         icon='EXPORT'
     )
@@ -429,9 +494,9 @@ def draw_add_custom_functions_in_shapekeys_dropdown_menu(self, context):
         op_row.enabled=False    
 
 
-class OBJECT_OT_StripAndClean(bpy.types.Operator):
+class GMTT_OT_strip_and_clean(bpy.types.Operator):
     """Strip and Clean Mesh Object"""
-    bl_idname = "object.strip_and_clean"
+    bl_idname = "gmtt.object_strip_and_clean"
     bl_label = "Strip and Clean"
     bl_options = {'REGISTER', 'UNDO'}
 
@@ -493,56 +558,235 @@ class OBJECT_OT_StripAndClean(bpy.types.Operator):
         return {'FINISHED'}
 
 
+class GMTT_OT_mesh_merge_weights(bpy.types.Operator):
+    bl_idname = "gmtt.mesh_merge_weights"
+    bl_label = "Merge Weights"
+    bl_description = "Merge weights from selected bones to the active bone"
+
+    @classmethod
+    def poll(cls, context):
+        return (context.object is not None and context.mode == 'PAINT_WEIGHT')
+
+    def transferWeightsBetweenGroups(self, obj, source, target):
+        vgs = obj.vertex_groups
+        vgroups = {g.name: g.index for g in vgs}
+        vertices = obj.data.vertices
+
+        sourceIndex = vgroups.get(source)
+        if sourceIndex is None:
+            return
+
+        targetIndex = vgroups.get(target)
+        if targetIndex is None:
+            new_vg = vgs.new(name=target)
+            targetIndex = new_vg.index
+
+        # Collect vertices and weights to merge
+        merge_data = []
+        for v in vertices:
+            groups = [g.group for g in v.groups]
+            if sourceIndex in groups:
+                try:
+                    w = vgs[source].weight(v.index)
+                    merge_data.append((v.index, w))
+                except RuntimeError:
+                    pass
+
+        # Apply merge
+        for v, w in merge_data:
+            vgs[target].add([v], w, 'ADD')
+            vgs[source].remove([v])
+
+    def execute(self, context):
+        obj = context.object
+        armature = None
+
+        for mod in obj.modifiers:
+            if mod.type == 'ARMATURE':
+                armature = mod.object
+                break
+
+        if not armature or armature.type != 'ARMATURE':
+            self.report({'ERROR'}, "No armature found.")
+            return {'CANCELLED'}
+
+        active_bone = context.active_pose_bone
+        if not active_bone:
+            self.report({'ERROR'}, "No active bone found.")
+            return {'CANCELLED'}
+
+        active_name = active_bone.name
+        selected_bones = [b.name for b in armature.data.bones if b.select and b.name != active_name]
+
+        if not selected_bones:
+            self.report({'ERROR'}, "Select at least one other bone besides the active bone.")
+            return {'CANCELLED'}
+
+        for sbone in selected_bones:
+            self.transferWeightsBetweenGroups(obj, sbone, active_name)
+
+        self.report({'INFO'}, "Merged weights from {} → {}".format(selected_bones, active_name))
+
+        #update the viewport
+        bpy.context.object.data.update()
+
+        return {'FINISHED'}
+
+
+
+
+# list of character choices (identifier, name, description)
+SKELETON_NAMES = [
+    ('G3F', "Genesis 3 Female", ""),
+    ('G8F', "Genesis 8 Female", ""),
+    ('G9',  "Genesis 9", ""),
+    ('UE5', "Unreal UE5 Mannequin", ""),
+]
+
+# --------------------------------------------------------------------
+# Mapping Loader
+# --------------------------------------------------------------------
+def load_mappings(source_name, target_name):
+    """
+    Dynamically load a mapping module from the 'mapping' subfolder.
+    Example: source='G9', target='G3F' → loads mapping/G3F_from_G9.py
+    Must contain a variable named G3F_from_G9 = {...}
+    """
+    module_name = "%s_from_%s" % (target_name, source_name)
+    base_path = os.path.join(os.path.dirname(__file__), "mappings")
+
+    if base_path not in sys.path:
+        sys.path.append(base_path)
+
+    try:
+        mapping_module = importlib.import_module(module_name)
+        mapping_dict = getattr(mapping_module, module_name)
+        print("Loaded mapping:", module_name)
+        return mapping_dict
+    except Exception as e:
+        print("Failed to load mapping %s: %s" % (module_name, e))
+        return None
+
+# --------------------------------------------------------------------
+# Main Operator
+# --------------------------------------------------------------------
+class GMTT_OT_convert_weights_between_characters(bpy.types.Operator):
+    """Convert vertex groups weights between characters"""
+    bl_idname = "gmtt.convert_weights_between_characters"
+    bl_label = "Convert Vertex Groups Weights Between Characters"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    source_character = bpy.props.EnumProperty(
+        name="Source Character",
+        description="Select the source character type",
+        items=SKELETON_NAMES,
+        default='G9'
+    )
+
+    target_character = bpy.props.EnumProperty(
+        name="Target Character",
+        description="Select the target character type",
+        items=SKELETON_NAMES,
+        default='UE5'
+    )
+
+    def invoke(self, context, event):
+        return context.window_manager.invoke_props_dialog(self, width=300)
+
+    def draw(self, context):
+        layout = self.layout
+        layout.prop(self, "source_character")
+        layout.prop(self, "target_character")
+
+    def execute(self, context):
+        src = self.source_character
+        tgt = self.target_character
+
+        self.report({'INFO'}, "Converting %s -> %s" % (src, tgt))
+
+        # Try to load mapping
+        mapping = load_mappings(src, tgt)
+
+        if mapping is None:
+            self.report({'ERROR'}, "No mapping found for %s_from_%s" % (tgt, src))
+            return {'CANCELLED'}
+
+        # At this point, 'mapping' is a dictionary like:
+        #   {"abdomenLower": ["spine1"], "chestUpper": ["spine4"], ...}
+        # You can now apply your weight transfer logic here.
+        #
+        # Example placeholder:
+        self.report({'INFO'}, "Loaded mapping with %d entries" % len(mapping))
+
+        # TODO: call your weight-transfer function
+        convertWeightsBetweenCharacters(context, src, tgt, mapping)
+
+        return {'FINISHED'}
+
+    # You can test it directly:
+    # bpy.ops.object.convert_weights_popup('INVOKE_DEFAULT')
+
+
+
 
 # Register and unregister classes
 def register():
-    bpy.utils.register_class(OBJECT_OT_StripAndClean)
-    bpy.utils.register_class(ARMATURE_OT_ExportArmatureDataToJson)
-    bpy.utils.register_class(ARMATURE_OT_ImportArmatureDataFromJson)
-    bpy.utils.register_class(ARMATURE_OT_CreateAndImportArmatureDataFromJson)
+    bpy.utils.register_class(GMTT_OT_strip_and_clean)
+    bpy.utils.register_class(GMTT_OT_convert_weights_between_characters)
+    bpy.utils.register_class(GMTT_OT_export_armature_to_json)
+    bpy.utils.register_class(GMTT_OT_import_armature_from_json)
+    bpy.utils.register_class(GMTT_OT_create_and_import_armature_from_json)
     bpy.types.INFO_MT_armature_add.append(draw_add_custom_armature_importer_in_menu)
-    bpy.utils.register_class(ARMATURE_PT_VXMod_armature_tools)
+    bpy.utils.register_class(GMTT_PT_armature_tools)
     #    
-    bpy.utils.register_class(IMPORT_OT_MaterialsFromJson)
-    bpy.utils.register_class(EXPORT_OT_MaterialsToJson)    
-    bpy.utils.register_class(OBJECT_OT_sort_materials)    
+    bpy.utils.register_class(GMTT_OT_import_materials_from_json)
+    bpy.utils.register_class(GMTT_OT_export_materials_to_json)    
+    bpy.utils.register_class(GMTT_OT_sort_materials)    
     bpy.types.MATERIAL_MT_specials.append(draw_add_custom_sort_in_materials_dropdown_menu)
     #
-    bpy.utils.register_class(EXPORT_OT_VertexWeightsToJson)
-    bpy.utils.register_class(IMPORT_OT_VertexWeightsFromJson)
-    bpy.utils.register_class(MESH_OT_RemoveEmptyVGroups)
+    bpy.utils.register_class(GMTT_OT_export_vertex_weights_to_json)
+    bpy.utils.register_class(GMTT_OT_import_vertex_weights_from_json)
+    bpy.utils.register_class(GMTT_OT_import_vertex_weights_from_dsf)    
+    bpy.utils.register_class(GMTT_OT_export_vertex_weights_to_dsf_snippet)
+    bpy.utils.register_class(GMTT_OT_mesh_remove_empty_vgroups)
     bpy.types.MESH_MT_vertex_group_specials.append(draw_add_custom_functions_in_vertex_groups_dropdown_menu)
     #
-    bpy.utils.register_class(EXPORT_OT_Shapekeys_To_Json)
-    bpy.utils.register_class(IMPORT_OT_Shapekeys_From_Json)
-    bpy.utils.register_class(EXPORT_OT_Shapekeys_To_Json_Non_Interactive)
-    bpy.utils.register_class(IMPORT_OT_Shapekeys_From_Json_NonInteractive)
+    bpy.utils.register_class(GMTT_OT_export_shapekeys_to_json)
+    bpy.utils.register_class(GMTT_OT_import_shapekeys_from_json)
+    bpy.utils.register_class(GMTT_OT_export_shapekeys_to_json_non_interactive)
+    bpy.utils.register_class(GMTT_OT_import_shapekeys_from_json_non_interactive)
     bpy.types.MESH_MT_shape_key_specials.append(draw_add_custom_functions_in_shapekeys_dropdown_menu)
+    bpy.utils.register_class(GMTT_OT_mesh_merge_weights)
+
     
 
 def unregister():
-    bpy.utils.unregister_class(OBJECT_OT_StripAndClean)
-    bpy.utils.unregister_class(ARMATURE_OT_ExportArmatureDataToJson)
-    bpy.utils.unregister_class(ARMATURE_OT_ImportArmatureDataFromJson)
-    bpy.utils.unregister_class(ARMATURE_OT_CreateAndImportArmatureDataFromJson)    
+    bpy.utils.unregister_class(GMTT_OT_strip_and_clean)
+    bpy.utils.unregister_class(GMTT_OT_convert_weights_between_characters)
+    bpy.utils.unregister_class(GMTT_OT_export_armature_to_json)
+    bpy.utils.unregister_class(GMTT_OT_import_armature_from_json)
+    bpy.utils.unregister_class(GMTT_OT_create_and_import_armature_from_json)    
     bpy.types.INFO_MT_armature_add.remove(draw_add_custom_armature_importer_in_menu)    
-    bpy.utils.unregister_class(ARMATURE_PT_VXMod_armature_tools)
+    bpy.utils.unregister_class(GMTT_PT_armature_tools)
     #
-    bpy.utils.unregister_class(IMPORT_OT_MaterialsFromJson)    
-    bpy.utils.unregister_class(EXPORT_OT_MaterialsToJson)    
-    bpy.utils.unregister_class(OBJECT_OT_sort_materials)
+    bpy.utils.unregister_class(GMTT_OT_import_materials_from_json)    
+    bpy.utils.unregister_class(GMTT_OT_export_materials_to_json)    
+    bpy.utils.unregister_class(GMTT_OT_sort_materials)
     bpy.types.MATERIAL_MT_specials.remove(draw_add_custom_sort_in_materials_dropdown_menu)  
     #
-    bpy.utils.unregister_class(EXPORT_OT_VertexWeightsToJson)
-    bpy.utils.unregister_class(IMPORT_OT_VertexWeightsFromJson)
+    bpy.utils.unregister_class(GMTT_OT_export_vertex_weights_to_json)
+    bpy.utils.unregister_class(GMTT_OT_import_vertex_weights_from_json)
+    bpy.utils.unregister_class(GMTT_OT_import_vertex_weights_from_dsf)   
+    bpy.utils.unregister_class(GMTT_OT_export_vertex_weights_to_dsf_snippet)
+    bpy.utils.unregister_class(GMTT_OT_mesh_remove_empty_vgroups)
     bpy.types.MESH_MT_vertex_group_specials.remove(draw_add_custom_functions_in_vertex_groups_dropdown_menu)
     #
-    bpy.utils.unregister_class(EXPORT_OT_Shapekeys_To_Json_Non_Interactive)
-    bpy.utils.unregister_class(IMPORT_OT_Shapekeys_From_Json_NonInteractive)    
-    bpy.utils.unregister_class(EXPORT_OT_Shapekeys_To_Json)
-    bpy.utils.unregister_class(IMPORT_OT_Shapekeys_From_Json)
+    bpy.utils.unregister_class(GMTT_OT_export_shapekeys_to_json)
+    bpy.utils.unregister_class(GMTT_OT_import_shapekeys_from_json)
+    bpy.utils.unregister_class(GMTT_OT_export_shapekeys_to_json_non_interactive)
+    bpy.utils.unregister_class(GMTT_OT_import_shapekeys_from_json_non_interactive)
     bpy.types.MESH_MT_shape_key_specials.remove(draw_add_custom_functions_in_shapekeys_dropdown_menu)    
-
+    bpy.utils.unregister_class(GMTT_OT_mesh_merge_weights)
 
 
 if __name__ == "__main__":
