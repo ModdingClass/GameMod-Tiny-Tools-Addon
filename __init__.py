@@ -38,26 +38,23 @@ from tempfile import NamedTemporaryFile
 import decimal
 
 
-from .utilz import *
-from .armatures import *
-from .materials import *
-from .vertex_groups import *
-from .shapekeys import *
 
+# Import submodules once
+from . import utilz
+from . import armatures
+from . import materials
+from . import vertex_groups
+from . import shapekeys
+
+# Hot reload support (F8 in Blender)
 if "bpy" in locals():
-    import imp
-    imp.reload(utilz)
-    imp.reload(armatures)
-    imp.reload(materials)
-    imp.reload(vertex_groups)
-    imp.reload(shapekeys)
+    importlib.reload(utilz)
+    importlib.reload(armatures)
+    importlib.reload(materials)
+    importlib.reload(vertex_groups)
+    importlib.reload(shapekeys)
     print("Reloaded multifiles")
 else:
-    from . import utilz
-    from . import armatures
-    from . import materials    
-    from . import vertex_groups   
-    from . import shapekeys  
     print("Imported multifiles")
 
 
@@ -73,7 +70,7 @@ class GMTT_OT_export_armature_to_json(bpy.types.Operator, ExportHelper):
 
     def execute(self, context):
         # Call the separated utility function to handle export
-        result = export_armature_data(context, self.filepath)
+        result = armatures.export_armature_data(context, self.filepath)
         return result
 
 # Operator for importing armature data
@@ -87,7 +84,7 @@ class GMTT_OT_import_armature_from_json(bpy.types.Operator, ImportHelper):
 
     def execute(self, context):
         # Call the separated utility function to handle export
-        result = import_armature_data(context, self.filepath)
+        result = armatures.import_armature_data(context, self.filepath)
         return result
 
 # Operator for importing armature data
@@ -101,7 +98,7 @@ class GMTT_OT_create_and_import_armature_from_json(bpy.types.Operator, ImportHel
 
     def execute(self, context):
         # Call the separated utility function to handle export
-        result = create_and_import_armature_data(context, self.filepath)
+        result = armatures.create_and_import_armature_data(context, self.filepath)
         return result    
 
 # Panel for the exporter
@@ -144,7 +141,7 @@ class GMTT_OT_export_materials_to_json(Operator, ExportHelper):
     
     def execute(self, context):
         ob = bpy.context.object
-        exportMaterialsToJsonFile(ob, self.filepath)
+        materials.exportMaterialsToJsonFile(ob, self.filepath)
         return {'FINISHED'}
 
 
@@ -162,7 +159,7 @@ class GMTT_OT_import_materials_from_json(Operator, ImportHelper):
     
     def execute(self, context):
         ob = bpy.context.object
-        importMaterialsFromJsonFile(ob, self.filepath)
+        materials.importMaterialsFromJsonFile(ob, self.filepath)
         return {'FINISHED'}
     
 
@@ -176,12 +173,46 @@ class GMTT_OT_sort_materials(bpy.types.Operator):
         ob = context.object
         
         # Call the separate function to sort materials
-        if not sort_materials_in_object(ob):
+        if not materials.sort_materials_in_object(ob):
             self.report({'WARNING'}, "Object has no materials to sort")
             return {'CANCELLED'}
 
         return {'FINISHED'}
 
+class GMTT_OT_preprocess_materials(bpy.types.Operator):
+    bl_idname = "gmtt.preprocess_materials"
+    bl_label = "Preprocess Materials"
+    bl_description = "Run material preprocessor for the active object"
+
+    def execute(self, context):
+        obj = bpy.context.scene.objects.active
+        if not obj:
+            self.report({'WARNING'}, "No active object")
+            return {'CANCELLED'}
+        parser = materials.MaterialProcessorParser(obj)
+
+        # --- MERGE pass (backwards) ---
+        parser.merge_ops = parser.parse_merges()
+        print("=== MERGE OPERATIONS ===")
+        for target_name, mat_list in reversed(parser.merge_ops):
+            print("Merging:", mat_list, "->", target_name)
+        #
+        parser.execute_merges()  # same logic as before, process backwards
+        
+        
+        
+        
+        # --- SEPARATE pass ---
+        parser.separate_ops = parser.parse_separates()
+        #
+        print("=== SEPARATE OPERATIONS ===")
+        for block in parser.separate_ops:
+            sep_list = block['materials']
+            suffix = block['suffix']
+            print("Separating:", sep_list, "->", suffix)  
+        parser.execute_separates(obj)  # now operates on merged object(s)
+
+        return {'FINISHED'}
 
 def draw_add_custom_sort_in_materials_dropdown_menu(self, context):
     self.layout.separator()
@@ -199,7 +230,12 @@ def draw_add_custom_sort_in_materials_dropdown_menu(self, context):
         GMTT_OT_export_materials_to_json.bl_idname, 
         text="Export Materials", 
         icon='EXPORT'
-    )     
+    )
+    self.layout.operator(
+    GMTT_OT_preprocess_materials.bl_idname, 
+        text="Preprocess Materials", 
+        icon='SAVE_PREFS'
+    )
 
 
 
@@ -224,7 +260,7 @@ class GMTT_OT_export_vertex_weights_to_json(Operator, ExportHelper):
         print('Selected file:', self.filepath)
         path_to_file = self.filepath
         ob = bpy.context.object
-        exportVertexGroupsToJsonFile(ob, path_to_file)
+        vertex_groups.exportVertexGroupsToJsonFile(ob, path_to_file)
         return {'FINISHED'}
     
 
@@ -248,7 +284,7 @@ class GMTT_OT_import_vertex_weights_from_json(Operator, ImportHelper):
         print('Selected file:', self.filepath)
         path_to_file = self.filepath
         ob = bpy.context.object
-        importVertexGroupsFromJsonFile(ob, path_to_file)
+        vertex_groups.importVertexGroupsFromJsonFile(ob, path_to_file)
         return {'FINISHED'}
 
 
@@ -272,7 +308,7 @@ class GMTT_OT_import_vertex_weights_from_dsf(Operator, ImportHelper):
         print('Selected file:', self.filepath)
         path_to_file = self.filepath
         ob = bpy.context.object
-        importVertexGroupsFromDsfFile(ob, path_to_file)
+        vertex_groups.importVertexGroupsFromDsfFile(ob, path_to_file)
         return {'FINISHED'}
 
 # this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -308,7 +344,7 @@ class GMTT_OT_mesh_remove_empty_vgroups(Operator):
 
     def execute(self, context):
         ob = bpy.context.object
-        removeEmptyVGroups(ob)
+        vertex_groups.removeEmptyVGroups(ob)
         return {'FINISHED'}
 
 def draw_add_custom_functions_in_vertex_groups_dropdown_menu(self, context):
@@ -365,9 +401,10 @@ class GMTT_OT_export_shapekeys_to_json(Operator, ExportHelper):
         print('Selected file:', self.filepath)
         path_to_file = self.filepath
         ob = bpy.context.object
-        exportShapeKeysToJsonFile(ob, path_to_file)
+        shapekeys.exportShapeKeysToJsonFile(ob, path_to_file)
         return {'FINISHED'}
 
+#Non Interactive - because we dont want to open the file picker
 # this class extends ExportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 class GMTT_OT_export_shapekeys_to_json_non_interactive(Operator):
     ''''''
@@ -386,7 +423,7 @@ class GMTT_OT_export_shapekeys_to_json_non_interactive(Operator):
         path_to_file = self.filepath
         print('Pushing shapekeys to file:', path_to_file)
         try:
-            exportShapeKeysToJsonFile(ob, path_to_file)
+            shapekeys.exportShapeKeysToJsonFile(ob, path_to_file)
         except Exception as e:
             self.report({'ERROR'}, "Failed to export shapekeys: {}".format(e))
             return {'CANCELLED'}            
@@ -408,9 +445,10 @@ class GMTT_OT_import_shapekeys_from_json(Operator, ImportHelper):
         print('Selected file:', self.filepath)
         path_to_file = self.filepath
         ob = bpy.context.object
-        importShapeKeysFromJsonFile(ob, path_to_file)
+        shapekeys.importShapeKeysFromJsonFile(ob, path_to_file)
         return {'FINISHED'}
 
+#Non Interactive - because we dont want to open the file picker
 # this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 class GMTT_OT_import_shapekeys_from_json_non_interactive(Operator):
     ''''''
@@ -428,7 +466,7 @@ class GMTT_OT_import_shapekeys_from_json_non_interactive(Operator):
         path_to_file = self.filepath
         print('Loading shapekeys from file:', path_to_file)
         try:
-            importShapeKeysFromJsonFile(ob, path_to_file)
+            shapekeys.importShapeKeysFromJsonFile(ob, path_to_file)
         except Exception as e:
             self.report({'ERROR'}, "Failed to import shapekeys: {}".format(e))
             return {'CANCELLED'}
@@ -457,7 +495,7 @@ class GMTT_OT_split_shapekey_by_axis(bpy.types.Operator):
         obj = context.object
         print("executed, but: {}".format( len(obj.data.shape_keys.key_blocks) > 0 and any(keyblock.select for keyblock in obj.data.shape_keys.key_blocks)))
         if obj and obj.type == 'MESH' and obj.active_shape_key_index > 0:
-            split_shape_key_by_axis(obj, obj.active_shape_key_index)
+            shapekeys.split_shape_key_by_axis(obj, obj.active_shape_key_index)
             return {'FINISHED'}
         return {'CANCELLED'}
 
@@ -719,7 +757,7 @@ class GMTT_OT_convert_weights_between_characters(bpy.types.Operator):
         self.report({'INFO'}, "Loaded mapping with %d entries" % len(mapping))
 
         # TODO: call your weight-transfer function
-        convertWeightsBetweenCharacters(context, src, tgt, mapping)
+        vertex_groups.convertWeightsBetweenCharacters(context, src, tgt, mapping)
 
         return {'FINISHED'}
 
@@ -742,6 +780,7 @@ def register():
     bpy.utils.register_class(GMTT_OT_import_materials_from_json)
     bpy.utils.register_class(GMTT_OT_export_materials_to_json)    
     bpy.utils.register_class(GMTT_OT_sort_materials)    
+    bpy.utils.register_class(GMTT_OT_preprocess_materials)
     bpy.types.MATERIAL_MT_specials.append(draw_add_custom_sort_in_materials_dropdown_menu)
     #
     bpy.utils.register_class(GMTT_OT_export_vertex_weights_to_json)
@@ -751,6 +790,7 @@ def register():
     bpy.utils.register_class(GMTT_OT_mesh_remove_empty_vgroups)
     bpy.types.MESH_MT_vertex_group_specials.append(draw_add_custom_functions_in_vertex_groups_dropdown_menu)
     #
+    bpy.utils.register_class(GMTT_OT_split_shapekey_by_axis)
     bpy.utils.register_class(GMTT_OT_export_shapekeys_to_json)
     bpy.utils.register_class(GMTT_OT_import_shapekeys_from_json)
     bpy.utils.register_class(GMTT_OT_export_shapekeys_to_json_non_interactive)
@@ -772,8 +812,10 @@ def unregister():
     bpy.utils.unregister_class(GMTT_OT_import_materials_from_json)    
     bpy.utils.unregister_class(GMTT_OT_export_materials_to_json)    
     bpy.utils.unregister_class(GMTT_OT_sort_materials)
+    bpy.utils.unregister_class(GMTT_OT_preprocess_materials)
     bpy.types.MATERIAL_MT_specials.remove(draw_add_custom_sort_in_materials_dropdown_menu)  
     #
+    bpy.utils.unregister_class(GMTT_OT_split_shapekey_by_axis)
     bpy.utils.unregister_class(GMTT_OT_export_vertex_weights_to_json)
     bpy.utils.unregister_class(GMTT_OT_import_vertex_weights_from_json)
     bpy.utils.unregister_class(GMTT_OT_import_vertex_weights_from_dsf)   
