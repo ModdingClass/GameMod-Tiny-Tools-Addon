@@ -87,6 +87,17 @@ class GMTT_OT_import_armature_from_json(bpy.types.Operator, ImportHelper):
         result = armatures.import_armature_data(context, self.filepath)
         return result
 
+# Operator for appending/overwriting bones into the active armature from a JSON file
+class GMTT_OT_append_armature_from_json(bpy.types.Operator, ImportHelper):
+    bl_idname = "gmtt.append_armature_from_json"
+    bl_label = "Append / Overwrite Bones"
+    bl_description = "Append bones from a JSON file into the active armature (adds new bones; overwrites existing ones by name)"
+    filename_ext = ".json"
+
+    def execute(self, context):
+        result = armatures.import_armature_data(context, self.filepath, append=True)
+        return result
+
 # Operator for importing armature data
 class GMTT_OT_create_and_import_armature_from_json(bpy.types.Operator, ImportHelper):
     bl_idname = "gmtt.create_and_import_armature_from_json"
@@ -117,6 +128,7 @@ class GMTT_PT_armature_tools(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.operator("gmtt.import_armature_from_json", text="Import Armature Data", icon='OUTLINER_DATA_ARMATURE')
+        layout.operator("gmtt.append_armature_from_json", text="Append / Overwrite Bones", icon='OUTLINER_DATA_ARMATURE')
         layout.operator("gmtt.export_armature_to_json", text="Export Armature Data", icon='OUTLINER_DATA_ARMATURE')
     
 
@@ -773,6 +785,7 @@ def register():
     bpy.utils.register_class(GMTT_OT_convert_weights_between_characters)
     bpy.utils.register_class(GMTT_OT_export_armature_to_json)
     bpy.utils.register_class(GMTT_OT_import_armature_from_json)
+    bpy.utils.register_class(GMTT_OT_append_armature_from_json)
     bpy.utils.register_class(GMTT_OT_create_and_import_armature_from_json)
     bpy.types.INFO_MT_armature_add.append(draw_add_custom_armature_importer_in_menu)
     bpy.utils.register_class(GMTT_PT_armature_tools)
@@ -805,6 +818,7 @@ def unregister():
     bpy.utils.unregister_class(GMTT_OT_convert_weights_between_characters)
     bpy.utils.unregister_class(GMTT_OT_export_armature_to_json)
     bpy.utils.unregister_class(GMTT_OT_import_armature_from_json)
+    bpy.utils.unregister_class(GMTT_OT_append_armature_from_json)
     bpy.utils.unregister_class(GMTT_OT_create_and_import_armature_from_json)    
     bpy.types.INFO_MT_armature_add.remove(draw_add_custom_armature_importer_in_menu)    
     bpy.utils.unregister_class(GMTT_PT_armature_tools)

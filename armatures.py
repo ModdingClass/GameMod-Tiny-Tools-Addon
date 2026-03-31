@@ -66,45 +66,63 @@ def create_and_import_armature_data(context, filepath):
     #armature_object.select = True
     return import_armature_data(context, filepath)
 
-# Utility function to import armature data
-def import_armature_data(context, filepath):
+# Utility function to import armature data.
+# append=False: clears all existing bones first (default, original behaviour).
+# append=True:  keeps existing bones; bones from the JSON are added or overwrite
+#               existing ones by name. Missing parent bones are skipped with a warning.
+def import_armature_data(context, filepath, append=False):
     armature = context.object
     # Load the JSON data
     bones_data = load_json(filepath)
-    # Switch to Edit Mode to create bones
+    # Switch to Edit Mode to create/edit bones
     bpy.context.scene.objects.active = armature
     bpy.ops.object.mode_set(mode='EDIT')
     armature_data = armature.data
-    #remove existing bones
-    for bone in armature_data.edit_bones:
-        armature_data.edit_bones.remove(bone)
-    # Dictionary to hold the created bones for easy parent reference
-    created_bones = {}
-    # Create bones from the JSON data
+
+    if not append:
+        # Original behaviour: wipe everything before importing
+        for bone in armature_data.edit_bones:
+            armature_data.edit_bones.remove(bone)
+        existing_bones = {}
+    else:
+        # Keep existing bones; seed the lookup dict with them so parent
+        # assignments can resolve to bones that were already in the armature.
+        existing_bones = {b.name: b for b in armature_data.edit_bones}
+
+    # created_bones tracks every bone available for parent lookups
+    created_bones = dict(existing_bones)
+
+    # Create or overwrite bones from the JSON data
     for bone_info in bones_data:
-        # Ensure all values are floats
-        head = [float(bone_info["head"][0]), float(bone_info["head"][1]), float(bone_info["head"][2])]
-        tail = [float(bone_info["tail"][0]), float(bone_info["tail"][1]), float(bone_info["tail"][2])]
-        roll = float(bone_info["roll"])
-        # Add the bone
-        bone = armature_data.edit_bones.new(bone_info["name"])
+        head = [float(v) for v in bone_info["head"]]
+        tail = [float(v) for v in bone_info["tail"]]
+        roll = math.radians(float(bone_info["roll"]))
+
+        # Reuse the existing edit_bone if present, otherwise create a new one
+        if bone_info["name"] in existing_bones:
+            bone = existing_bones[bone_info["name"]]
+        else:
+            bone = armature_data.edit_bones.new(bone_info["name"])
+
         bone.head = (head[0], head[1], head[2])
         bone.tail = (tail[0], tail[1], tail[2])
-        bone.roll = math.radians(roll)
+        bone.roll = roll
         bone.use_connect = bone_info["connected"]
         bone.use_deform = bone_info["deform"]
-        # Store the created bone
         created_bones[bone_info["name"]] = bone
-    #
-    # Set parent bones after all bones have been created
+
+    # Set parent bones after all bones have been created/updated
     for bone_info in bones_data:
         if bone_info["parent"]:
             parent_bone = created_bones.get(bone_info["parent"])
             if parent_bone:
                 created_bones[bone_info["name"]].parent = parent_bone
-    
+            else:
+                print("Warning: parent bone '{}' not found for '{}', skipping parent assignment.".format(
+                    bone_info["parent"], bone_info["name"]))
+
     # Switch back to Object Mode
     bpy.ops.object.mode_set(mode='OBJECT')
-    
+
     print("Armature has been imported from", filepath)
     return {'FINISHED'}
