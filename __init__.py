@@ -27,8 +27,8 @@ import math
 import importlib
 from mathutils import Vector
 from bpy.app.handlers import persistent
-from bpy.props import StringProperty, BoolProperty 
-from bpy_extras.io_utils import ImportHelper 
+from bpy.props import StringProperty, BoolProperty, CollectionProperty
+from bpy_extras.io_utils import ImportHelper
 from bpy_extras.io_utils import ExportHelper 
 from bpy.types import Operator
 import bpy.utils.previews
@@ -487,6 +487,95 @@ class GMTT_OT_import_shapekeys_from_json_non_interactive(Operator):
 
 
 
+# this class extends ImportHelper !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+class GMTT_OT_import_shapekeys_from_obj(Operator, ImportHelper):
+    ''''''
+    bl_idname = "gmtt.import_shapekeys_from_obj"
+    bl_label = "Import shapekeys from obj"
+    bl_description = "Import one or more obj files and add each one as a shapekey on the active mesh"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    filename_ext = ".obj"
+    filter_glob = StringProperty(
+        default='*.obj',
+        options={'HIDDEN'}
+    )
+    # ImportHelper only fills filepath, and with a multi selection that is the
+    # last file clicked - the selection itself arrives in files + directory
+    files = CollectionProperty(
+        name="File Path",
+        type=bpy.types.OperatorFileListElement
+    )
+    directory = StringProperty(
+        subtype='DIR_PATH'
+    )
+
+    def execute(self, context):
+        target = context.object
+        if target is None or target.type != 'MESH':
+            self.report({'ERROR'}, "Active object is not a mesh.")
+            return {'CANCELLED'}
+        # a morph is written straight into the target's local space, so the two
+        # spaces have to be the same one - see objectTransformIsZeroed
+        if not shapekeys.objectTransformIsZeroed(target):
+            message = "Target mesh '{}' has transforms. Apply them (Ctrl+A) before importing morphs.".format(target.name)
+            print("Import shapekeys from obj: ABORTED - " + message)
+            self.report({'ERROR'}, message)
+            return {'CANCELLED'}
+        paths = [os.path.join(self.directory, f.name) for f in self.files if f.name]
+        if not paths and self.filepath:
+            paths = [self.filepath]
+        if not paths:
+            self.report({'ERROR'}, "No obj file selected.")
+            return {'CANCELLED'}
+        paths.sort()
+        #
+        previous_mode = target.mode
+        if previous_mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode='OBJECT')
+        previously_selected = [ob.name for ob in context.selected_objects]
+        started_at = time.time()
+        imported_count = 0
+        failures = []
+        print("=" * 78)
+        print("Import shapekeys from obj: {} file(s) onto '{}' ({} verts)".format(
+            len(paths), target.name, len(target.data.vertices)))
+        for path in paths:
+            filename = os.path.basename(path)
+            try:
+                result = shapekeys.importShapeKeyFromObjFile(target, path)
+            except Exception as e:
+                failures.append(filename)
+                print("  FAILED  {} : {}".format(filename, e))
+                continue
+            imported_count += 1
+            print("  OK      {} -> shapekey '{}' ({} verts{}{})".format(
+                filename,
+                result["name"],
+                result["vertices"],
+                ", transforms normalized" if result["normalized"] else "",
+                ", {} orphan datablock(s) removed".format(result["orphans_removed"]) if result["orphans_removed"] else ""))
+        # the import operator took the active slot and the selection with it
+        for ob in context.selected_objects:
+            ob.select = False
+        for name in previously_selected:
+            if name in context.scene.objects:
+                context.scene.objects[name].select = True
+        target.select = True
+        context.scene.objects.active = target
+        if previous_mode != 'OBJECT':
+            bpy.ops.object.mode_set(mode=previous_mode)
+        #
+        summary = "{} shapekey(s) imported, {} failed, in {:.2f}s".format(
+            imported_count, len(failures), time.time() - started_at)
+        print("Import shapekeys from obj: " + summary)
+        if failures:
+            print("  failed files: {}".format(", ".join(failures)))
+        print("=" * 78)
+        self.report({'WARNING'} if failures else {'INFO'}, summary)
+        return {'FINISHED'}
+
+
 class GMTT_OT_split_shapekey_by_axis(bpy.types.Operator):
     """Split selected shape key into X, Y, Z components"""
     bl_idname = "gmtt.split_shapekey_by_axis"
@@ -527,9 +616,16 @@ def draw_add_custom_functions_in_shapekeys_dropdown_menu(self, context):
         pass
     else:
         op_row.enabled=False
+    # this menu is drawn bottom-up (2.79 reverses a dropdown that opens
+    # upwards), so the obj entry is listed FIRST to appear BELOW the json one
     self.layout.operator(
-        GMTT_OT_import_shapekeys_from_json.bl_idname, 
-        text="Import Shapekeys from JSON", 
+        GMTT_OT_import_shapekeys_from_obj.bl_idname,
+        text="Import Shapekeys from OBJ files",
+        icon='IMPORT'
+    )
+    self.layout.operator(
+        GMTT_OT_import_shapekeys_from_json.bl_idname,
+        text="Import Shapekeys from JSON",
         icon='IMPORT'
     )
     op_row = self.layout.row()
@@ -808,6 +904,7 @@ def register():
     bpy.utils.register_class(GMTT_OT_import_shapekeys_from_json)
     bpy.utils.register_class(GMTT_OT_export_shapekeys_to_json_non_interactive)
     bpy.utils.register_class(GMTT_OT_import_shapekeys_from_json_non_interactive)
+    bpy.utils.register_class(GMTT_OT_import_shapekeys_from_obj)
     bpy.types.MESH_MT_shape_key_specials.append(draw_add_custom_functions_in_shapekeys_dropdown_menu)
     bpy.utils.register_class(GMTT_OT_mesh_merge_weights)
 
@@ -841,7 +938,8 @@ def unregister():
     bpy.utils.unregister_class(GMTT_OT_import_shapekeys_from_json)
     bpy.utils.unregister_class(GMTT_OT_export_shapekeys_to_json_non_interactive)
     bpy.utils.unregister_class(GMTT_OT_import_shapekeys_from_json_non_interactive)
-    bpy.types.MESH_MT_shape_key_specials.remove(draw_add_custom_functions_in_shapekeys_dropdown_menu)    
+    bpy.utils.unregister_class(GMTT_OT_import_shapekeys_from_obj)
+    bpy.types.MESH_MT_shape_key_specials.remove(draw_add_custom_functions_in_shapekeys_dropdown_menu)
     bpy.utils.unregister_class(GMTT_OT_mesh_merge_weights)
 
 
